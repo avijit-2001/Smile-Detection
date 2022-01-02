@@ -27,10 +27,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     // PLAYER
-    AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
-            SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
-            AudioFormat.ENCODING_PCM_16BIT, GENERATED_SOUND.length,
-            AudioTrack.MODE_STATIC);
+    AudioTrack audioTrack;
 
     private static final String TAG = "AudioRecordTest";
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;

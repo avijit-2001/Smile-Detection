@@ -22,15 +22,12 @@ public class MainActivity extends AppCompatActivity {
     int NUMBER_OF_SAMPLE = (int) (DURATION * SAMPLE_RATE);
     double[] sample = new double[NUMBER_OF_SAMPLE];
     double F1 = 20;
-    double F2 = 1900;
+    double F2 = 2000;
     byte[] GENERATED_SOUND = new byte[2 * NUMBER_OF_SAMPLE];
 
 
     // PLAYER
-    AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
-            SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
-            AudioFormat.ENCODING_PCM_16BIT, GENERATED_SOUND.length,
-            AudioTrack.MODE_STATIC);
+    AudioTrack audioTrack;
 
     private static final String TAG = "AudioRecordTest";
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
@@ -61,15 +58,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     void playSound() {
-        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
-                SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT, GENERATED_SOUND.length,
-                AudioTrack.MODE_STATIC);
-
         audioTrack.write(GENERATED_SOUND, 0, GENERATED_SOUND.length);
+        audioTrack.setLoopPoints(0, GENERATED_SOUND.length/2, -1);
         audioTrack.play();
-        audioTrack.release();
-
     }
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,13 +74,22 @@ public class MainActivity extends AppCompatActivity {
                 permissions,
                 WRITE_EXTERNAL_STORAGE_PERMISSION);
 
+        audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
+                SAMPLE_RATE, AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT, GENERATED_SOUND.length,
+                AudioTrack.MODE_STATIC);
+
         Button playChirp;
         playChirp = findViewById(R.id.playChirp);
         playChirp.setOnClickListener(view -> {
             genTone();
-            while (true) {
-                playSound();
-            }
+            Thread playThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    playSound();
+                }
+            });
+            playThread.start();
         });
     }
 }

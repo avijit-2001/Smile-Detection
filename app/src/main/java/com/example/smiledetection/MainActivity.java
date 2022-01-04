@@ -13,7 +13,9 @@ import android.media.AudioTrack;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
+import android.widget.TextView;
 
 @RequiresApi(api = Build.VERSION_CODES.R)
 public class MainActivity extends AppCompatActivity {
@@ -23,17 +25,30 @@ public class MainActivity extends AppCompatActivity {
     int SAMPLE_RATE = 44100;
     int NUMBER_OF_SAMPLE = (int) (DURATION * SAMPLE_RATE);
     double[] sample = new double[NUMBER_OF_SAMPLE];
-    double F1 = 20;
-    double F2 = 2000;
+    double F1 = 16000;
+    double F2 = 20000;
     byte[] GENERATED_SOUND = new byte[2 * NUMBER_OF_SAMPLE];
     private int BUFFER_SIZE = 100;
 
+    //Phaser representation
+    int NUMBER_OF_POINTS = 50;
+    int POINTS_FOR_INITIAL = 5;
+    double[][] points = new double[NUMBER_OF_POINTS][2];
+    int iterator = 0;
+    boolean FreqBinInitialized = false;
+    boolean ThresholdInitialized = false;
 
     // PLAYER
     AudioTrack audioTrack;
 
+    //Display
+    TextView textView;
+
     // CIRCULAR BUFFER
     private CircularBuffer circularBuffer = new CircularBuffer(BUFFER_SIZE);
+
+    //SIGNAL PROCESSING
+    private SignalProcessor signalProcessor = new SignalProcessor();
 
     private static final String TAG = "AudioRecordTest";
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
@@ -94,31 +109,46 @@ public class MainActivity extends AppCompatActivity {
         isRecording = true;
         Thread recordingThread = new Thread(new Runnable() {
             public void run() {
-                writeAudioDataToFile();
+                writeAudioDataToBuffer();
             }
         }, "AudioRecorder Thread");
         recordingThread.start();
     }
 
-    private byte[] short2byte(short[] sData) {
-        int shortArrSize = sData.length;
-        byte[] bytes = new byte[shortArrSize * 2];
-        for (int i = 0; i < shortArrSize; i++) {
-            bytes[i * 2] = (byte) (sData[i] & 0x00FF);
-            bytes[(i * 2) + 1] = (byte) (sData[i] >> 8);
-            sData[i] = 0;
-        }
-        return bytes;
-
-    }
-
-    private void writeAudioDataToFile() {
-        short sData[] = new short[bufferElements2Rec];
+    private void writeAudioDataToBuffer() {
+        short[] sData = new short[bufferElements2Rec];
 
         while (isRecording) {
             recorder.read(sData, 0, bufferElements2Rec);
-            int i = circularBuffer.insertBuffer(sData);
+            //Log.e("Record data", String.format("fData[100]:%f",sData[100]/(double)32768));
+            int e = circularBuffer.insertBuffer(sData);
 
+            short[] dData = circularBuffer.consumeBuffer();
+            double[] fData = new double[dData.length];
+
+            Filter filter = new Filter(15900,44100, Filter.PassType.Highpass,1);
+            for(int i=0; i< sData.length; i++){
+                float data = dData[i] / (float)32768 ;
+                filter.Update(data);
+                fData[i] = filter.getValue();
+                //dData[i] = (short) (fData[i] * 32767);
+            }
+
+            signalProcessor.FourierTransform(sample, fData);
+            if(!FreqBinInitialized && iterator==POINTS_FOR_INITIAL){
+                signalProcessor.initializeFreq_Bin();
+                FreqBinInitialized = true;
+            }
+
+            if(!ThresholdInitialized && iterator==2*POINTS_FOR_INITIAL){
+                signalProcessor.initializeThresholds();
+                ThresholdInitialized = true;
+            }
+
+            if(FreqBinInitialized && ThresholdInitialized){
+                signalProcessor.checkStatus(textView);
+            }
+            iterator = (iterator+1)%NUMBER_OF_POINTS;
         }
     }
 
@@ -139,6 +169,8 @@ public class MainActivity extends AppCompatActivity {
                 AudioFormat.ENCODING_PCM_16BIT, GENERATED_SOUND.length,
                 AudioTrack.MODE_STATIC);
 
+        textView = findViewById(R.id.textView);
+
         Button playChirp;
         playChirp = findViewById(R.id.playChirp);
         playChirp.setOnClickListener(view -> {
@@ -149,9 +181,18 @@ public class MainActivity extends AppCompatActivity {
                     playSound();
                 }
             });
-
             playThread.start();
 
+            startRecording();
         });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        /*if (lineVisualizer != null)
+            lineVisualizer.release();*/
+        if (audioTrack != null)
+            audioTrack.release();
     }
 }

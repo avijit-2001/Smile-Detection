@@ -25,7 +25,9 @@ public class SignalProcessor {
     private int iterator = 0;
     private double distPre = 0;
     private double distCur = 0;
-    private boolean FreqCall = false;
+    private double var;
+    private boolean BinInitialized= false;
+    private boolean ThresInitialized = false;
 
 
     public SignalProcessor(){
@@ -37,15 +39,16 @@ public class SignalProcessor {
 
     void initializeFreq_Bin(){
         FREQ_BIN = binIndex();
-        FreqCall = true;
+        BinInitialized = true;
         Log.e("initialization",String.format("FreqBin: %d", FREQ_BIN));
     }
 
     void initializeThresholds(){
-        double var = variance();
+        ThresInitialized = true;
+        var = variance();
         thresBlink = 5*var;
-        thresSmile = 10*var;
-        thresTimeLow = 10;
+        thresSmile = 5*var;
+        thresTimeLow = 1;
         Log.e("initialization",String.format("variance: %f", var));
     }
 
@@ -70,7 +73,7 @@ public class SignalProcessor {
         fft.dft();
         Complex[] mixedFftComplex = fft.returnComplex(true);
 
-        if(iterator < NUMBER_OF_INITIAL && !FreqCall){
+        if(iterator < NUMBER_OF_INITIAL && !BinInitialized){
             for(int i=0; i< SAMPLE_LENGTH/2; i++) {
                 mixedSamplesPhase[iterator][i] = mixedFftComplex[i].getArgument();
             }
@@ -78,7 +81,7 @@ public class SignalProcessor {
 
         double amplitude = mixedFftComplex[FREQ_BIN].abs();
         double angle = mixedFftComplex[FREQ_BIN].getArgument();
-        if(FreqCall) {
+        if(BinInitialized) {
             initialPoints[iterator][0] = amplitude * Math.cos(angle);
             initialPoints[iterator][1] = amplitude * Math.sin(angle);
 
@@ -88,8 +91,14 @@ public class SignalProcessor {
         distPre = distCur;
         distCur = distances[iterator];
         iterator = (iterator+1)%NUMBER_OF_SAMPLE_POINTS;
+
+        if(BinInitialized && ThresInitialized && iterator == 2*NUMBER_OF_INITIAL){
+            double[] v = prattNewton(initialPoints);
+            center[0] = v[0];
+            center[1] = v[1];
+        }
         //Log.e("SignalDimension", String.format("%d x %d",analyticSample.length, analyticSample[0].length));
-        Log.e("SignalDimension", String.format("%f x %d", record[100], mixedSignal.length));
+        Log.e("SignalDistance", String.format("%f", distCur));
     }
 
     //double[][] pointIQplane		//global variable, initialize it to size of 50
@@ -147,25 +156,32 @@ public class SignalProcessor {
         return (double)sqDiff / n;
     }
 
-    void checkStatus(TextView textView)		//thresBlink, countLow, thresLow, thresSmile
+    int checkStatus()		//thresBlink, countLow, thresLow, thresSmile
     {
+        int status = -1;
 
-        if(distPre - distCur > thresBlink)
+        if(distPre - distCur > thresBlink && countLow==0){
             countLow++;
+        }
+        else if((countLow != 0) && (Math.abs(distCur - distPre) < 2*var)){
+            countLow++;
+        }
 
         if(countLow >= thresTimeLow)
         {
-            textView.setText("Sleeping");
+            status = 0;
             Log.e("Status", "Sleeping");
             countLow = 0;
-            return;
+            return status;
         }
 
         if(distCur - distPre > thresSmile)
         {
-            textView.setText("Smiling");
+            status = 1;
             Log.e("Status","Smiling");
         }
+
+        return status;
     }
 
     double[] signalToPoint(double[] signal)

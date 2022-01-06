@@ -28,7 +28,7 @@ public class MainActivity extends AppCompatActivity {
     double F1 = 16000;
     double F2 = 20000;
     byte[] GENERATED_SOUND = new byte[2 * NUMBER_OF_SAMPLE];
-    private int BUFFER_SIZE = 100;
+    private int BUFFER_SIZE = 50000;
 
     //Phaser representation
     int NUMBER_OF_POINTS = 50;
@@ -146,7 +146,21 @@ public class MainActivity extends AppCompatActivity {
             }
 
             if(FreqBinInitialized && ThresholdInitialized){
-                signalProcessor.checkStatus(textView);
+                int status = signalProcessor.checkStatus();
+                if(status == 0){
+                    textView.post(new Runnable() {
+                        public void run() {
+                            textView.setText("Sleeping");
+                        }
+                    });;
+                }
+                else if(status == 1){
+                    textView.post(new Runnable() {
+                        public void run() {
+                            textView.setText("Smiling");
+                        }
+                    });
+                }
             }
             iterator = (iterator+1)%NUMBER_OF_POINTS;
         }
@@ -194,5 +208,8 @@ public class MainActivity extends AppCompatActivity {
             lineVisualizer.release();*/
         if (audioTrack != null)
             audioTrack.release();
+
+        if(recorder != null)
+            recorder.release();
     }
 }

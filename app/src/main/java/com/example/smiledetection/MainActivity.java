@@ -43,6 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
     //Display
     TextView textView;
+    TextView freqBin;
 
     // CIRCULAR BUFFER
     private CircularBuffer circularBuffer = new CircularBuffer(BUFFER_SIZE);
@@ -137,6 +138,11 @@ public class MainActivity extends AppCompatActivity {
             signalProcessor.FourierTransform(sample, fData);
             if(!FreqBinInitialized && iterator==POINTS_FOR_INITIAL){
                 signalProcessor.initializeFreq_Bin();
+                freqBin.post(new Runnable() {
+                    public void run() {
+                        freqBin.setText(Integer.toString(signalProcessor.FREQ_BIN));
+                    }
+                });;
                 FreqBinInitialized = true;
             }
 
@@ -152,12 +158,19 @@ public class MainActivity extends AppCompatActivity {
                         public void run() {
                             textView.setText("Sleeping");
                         }
-                    });;
+                    });
                 }
                 else if(status == 1){
                     textView.post(new Runnable() {
                         public void run() {
                             textView.setText("Smiling");
+                        }
+                    });
+                }
+                else if(status == -1){
+                    textView.post(new Runnable() {
+                        public void run() {
+                            textView.setText("Status");
                         }
                     });
                 }
@@ -184,6 +197,7 @@ public class MainActivity extends AppCompatActivity {
                 AudioTrack.MODE_STATIC);
 
         textView = findViewById(R.id.textView);
+        freqBin = findViewById(R.id.freqBin);
 
         Button playChirp;
         playChirp = findViewById(R.id.playChirp);

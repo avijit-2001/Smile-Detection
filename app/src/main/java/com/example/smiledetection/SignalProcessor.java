@@ -18,7 +18,8 @@ public class SignalProcessor {
     private double[] distances;
     private double[] center;
     private int countLow;
-    private int FREQ_BIN;
+    private int displayTime = 0;
+    int FREQ_BIN;
     private double thresBlink;
     private double thresSmile;
     private double thresTimeLow;
@@ -48,7 +49,7 @@ public class SignalProcessor {
         var = variance();
         thresBlink = 5*var;
         thresSmile = 5*var;
-        thresTimeLow = 1;
+        thresTimeLow = 3;
         Log.e("initialization",String.format("variance: %f", var));
     }
 
@@ -98,7 +99,7 @@ public class SignalProcessor {
             center[1] = v[1];
         }
         //Log.e("SignalDimension", String.format("%d x %d",analyticSample.length, analyticSample[0].length));
-        Log.e("SignalDistance", String.format("%f", distCur));
+        Log.e("SignalDistance", String.format("amplitude: %f, phase: %f, distance: %f", amplitude, angle, distCur));
     }
 
     //double[][] pointIQplane		//global variable, initialize it to size of 50
@@ -158,12 +159,12 @@ public class SignalProcessor {
 
     int checkStatus()		//thresBlink, countLow, thresLow, thresSmile
     {
-        int status = -1;
+        int status = 2;
 
         if(distPre - distCur > thresBlink && countLow==0){
             countLow++;
         }
-        else if((countLow != 0) && (Math.abs(distCur - distPre) < 2*var)){
+        else if((countLow != 0) && (Math.abs(distCur - distPre) < 3*var)){
             countLow++;
         }
 
@@ -172,13 +173,22 @@ public class SignalProcessor {
             status = 0;
             Log.e("Status", "Sleeping");
             countLow = 0;
+            displayTime = 0;
             return status;
         }
 
         if(distCur - distPre > thresSmile)
         {
             status = 1;
+            displayTime = 0;
             Log.e("Status","Smiling");
+            return status;
+        }
+
+        displayTime++;
+
+        if(displayTime > 3){
+            status = -1;
         }
 
         return status;

@@ -1,14 +1,24 @@
 package com.example.smiledetection;
 
+import android.content.Context;
+import android.os.Environment;
 import android.util.Log;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
 
 import com.github.psambit9791.jdsp.transform.DiscreteFourier;
 import com.github.psambit9791.jdsp.transform.Hilbert;
 
 import org.apache.commons.math3.complex.Complex;
 
-public class SignalProcessor {
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+
+public class SignalProcessor extends AppCompatActivity {
 
     private int SAMPLE_LENGTH = 2048;
     private int NUMBER_OF_INITIAL = 5;
@@ -29,6 +39,9 @@ public class SignalProcessor {
     private double var;
     private boolean BinInitialized= false;
     private boolean ThresInitialized = false;
+
+    //Write to file
+    String filename="SleepSmile.txt", path="SmileDetection", content="";
 
 
     public SignalProcessor(){
@@ -100,6 +113,7 @@ public class SignalProcessor {
         }
         //Log.e("SignalDimension", String.format("%d x %d",analyticSample.length, analyticSample[0].length));
         Log.e("SignalDistance", String.format("amplitude: %f, phase: %f, distance: %f", amplitude, angle, distCur));
+        getFileTxt(amplitude+","+angle,"SmileSleep.txt");
     }
 
     //double[][] pointIQplane		//global variable, initialize it to size of 50
@@ -309,4 +323,30 @@ public class SignalProcessor {
 
         return centroid;
     }
+    private void getFileTxt(String content,String filename)
+    {
+        File txt=null;
+        try {
+            //Log.e("path123","welcome");
+            FileWriter fw=null;
+            BufferedWriter bw = null;
+            File directory = SignalProcessor.this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+            Log.e("path123",""+directory);
+            txt = new File(directory, filename+".txt");
+            Log.d("path",""+txt.exists());
+            if (!txt.exists()) {
+                txt.createNewFile();
+            }
+            fw = new FileWriter(txt.getAbsolutePath(), true);
+            bw= new BufferedWriter(fw);
+            bw.write(content);
+            bw.close();
+
+
+        }catch(Exception e) {
+            //ok
+
+        }
+    }
+
 }

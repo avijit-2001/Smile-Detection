@@ -10,11 +10,14 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
 import android.media.AudioTrack;
+import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 @RequiresApi(api = Build.VERSION_CODES.R)
@@ -44,6 +47,9 @@ public class MainActivity extends AppCompatActivity {
     //Display
     TextView textView;
     TextView freqBin;
+    ImageView sleepTracker, smileTracker;
+    MediaPlayer md;
+    ProgressBar smilometer, sleepometer;
 
     // CIRCULAR BUFFER
     private CircularBuffer circularBuffer = new CircularBuffer(BUFFER_SIZE);
@@ -56,6 +62,10 @@ public class MainActivity extends AppCompatActivity {
     private static final int WRITE_EXTERNAL_STORAGE_PERMISSION = 200;
 
 
+
+    //Counters
+    int SmileCounter=0, SleepCounter=0;
+    // Data Storage
 
     // PERMISSIONS
     private final String [] permissions = {Manifest.permission.RECORD_AUDIO,
@@ -157,6 +167,14 @@ public class MainActivity extends AppCompatActivity {
                     textView.post(new Runnable() {
                         public void run() {
                             textView.setText("Sleeping");
+                            sleepTracker.setImageResource(R.drawable.sleep);
+                            smileTracker.setImageResource(R.drawable.normal);
+                            if(md==null)
+                            md=MediaPlayer.create(getApplicationContext(), R.raw.sleepy);
+                            md.start();
+                            SleepCounter++;
+                            smilometer.setProgress(SleepCounter);
+
                         }
                     });
                 }
@@ -164,6 +182,10 @@ public class MainActivity extends AppCompatActivity {
                     textView.post(new Runnable() {
                         public void run() {
                             textView.setText("Smiling");
+                            sleepTracker.setImageResource(R.drawable.awake);
+                            smileTracker.setImageResource(R.drawable.smile);
+                            SmileCounter++;
+                            smilometer.setProgress(SmileCounter);
                         }
                     });
                 }
@@ -171,6 +193,8 @@ public class MainActivity extends AppCompatActivity {
                     textView.post(new Runnable() {
                         public void run() {
                             textView.setText("Status");
+                            sleepTracker.setImageResource(R.drawable.awake);
+                            smileTracker.setImageResource(R.drawable.normal);
                         }
                     });
                 }
@@ -198,6 +222,12 @@ public class MainActivity extends AppCompatActivity {
 
         textView = findViewById(R.id.textView);
         freqBin = findViewById(R.id.freqBin);
+        sleepTracker=(ImageView)findViewById(R.id.sleep);
+        sleepTracker.setImageResource(R.drawable.awake);
+        smileTracker=(ImageView)findViewById(R.id.smile);
+        smileTracker.setImageResource(R.drawable.normal);
+        smilometer=(ProgressBar)findViewById(R.id.progressBarsmile);
+        sleepometer=(ProgressBar)findViewById(R.id.progressBarsleep);
 
         Button playChirp;
         playChirp = findViewById(R.id.playChirp);
@@ -226,4 +256,5 @@ public class MainActivity extends AppCompatActivity {
         if(recorder != null)
             recorder.release();
     }
+
 }

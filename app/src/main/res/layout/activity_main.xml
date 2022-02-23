@@ -117,4 +117,16 @@
         app:layout_constraintStart_toEndOf="@+id/sleepometer"
         app:layout_constraintTop_toBottomOf="@+id/progressBarsmile" />
 
+    <EditText
+        android:id="@+id/expression"
+        android:hint="Expression (for data collection)"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="textPersonName"
+        app:layout_constraintBottom_toTopOf="@+id/freqBin"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/smile" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

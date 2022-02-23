@@ -6,6 +6,7 @@ import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
@@ -16,6 +17,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -43,10 +45,12 @@ public class MainActivity extends AppCompatActivity {
 
     // PLAYER
     AudioTrack audioTrack;
+    AudioDeviceInfo audioDeviceInfo;
 
     //Display
     TextView textView;
     TextView freqBin;
+    EditText expression;
     ImageView sleepTracker, smileTracker;
     MediaPlayer md;
     ProgressBar smilometer, sleepometer;
@@ -55,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
     private CircularBuffer circularBuffer = new CircularBuffer(BUFFER_SIZE);
 
     //SIGNAL PROCESSING
-    private SignalProcessor signalProcessor = new SignalProcessor();
+    private SignalProcessor signalProcessor = new SignalProcessor(this);
 
     private static final String TAG = "AudioRecordTest";
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
@@ -92,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
     void playSound() {
         audioTrack.write(GENERATED_SOUND, 0, GENERATED_SOUND.length);
         audioTrack.setLoopPoints(0, GENERATED_SOUND.length/2, -1);
+        audioTrack.setPreferredDevice(audioDeviceInfo);
         audioTrack.play();
     }
 
@@ -132,16 +137,17 @@ public class MainActivity extends AppCompatActivity {
         while (isRecording) {
             recorder.read(sData, 0, bufferElements2Rec);
             //Log.e("Record data", String.format("fData[100]:%f",sData[100]/(double)32768));
-            int e = circularBuffer.insertBuffer(sData);
+            //int e = circularBuffer.insertBuffer(sData);
 
-            short[] dData = circularBuffer.consumeBuffer();
-            double[] fData = new double[dData.length];
+            //short[] dData = circularBuffer.consumeBuffer();
+            double[] fData = new double[sData.length];
 
             Filter filter = new Filter(15900,44100, Filter.PassType.Highpass,1);
             for(int i=0; i< sData.length; i++){
-                float data = dData[i] / (float)32768 ;
+                float data = sData[i] / (float)32768 ;
                 filter.Update(data);
                 fData[i] = filter.getValue();
+                //fData[i] = sData[i] / (double)32768;
                 //dData[i] = (short) (fData[i] * 32767);
             }
 
@@ -171,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
                             smileTracker.setImageResource(R.drawable.normal);
                             if(md==null)
                             md=MediaPlayer.create(getApplicationContext(), R.raw.sleepy);
-                            md.start();
+                            //md.start();
                             SleepCounter++;
                             smilometer.setProgress(SleepCounter);
 
@@ -221,6 +227,7 @@ public class MainActivity extends AppCompatActivity {
                 AudioTrack.MODE_STATIC);
 
         textView = findViewById(R.id.textView);
+        expression = findViewById(R.id.expression);
         freqBin = findViewById(R.id.freqBin);
         sleepTracker=(ImageView)findViewById(R.id.sleep);
         sleepTracker.setImageResource(R.drawable.awake);
@@ -232,6 +239,7 @@ public class MainActivity extends AppCompatActivity {
         Button playChirp;
         playChirp = findViewById(R.id.playChirp);
         playChirp.setOnClickListener(view -> {
+            signalProcessor.getFileTxt(expression.getText().toString() + "\n", "SmileSleep.txt");
             genTone();
             Thread playThread = new Thread(new Runnable() {
                 @Override
@@ -255,6 +263,8 @@ public class MainActivity extends AppCompatActivity {
 
         if(recorder != null)
             recorder.release();
+
+        isRecording = false;
     }
 
 }

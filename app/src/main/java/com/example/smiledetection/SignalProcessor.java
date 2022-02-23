@@ -22,48 +22,53 @@ public class SignalProcessor extends AppCompatActivity {
 
     private int SAMPLE_LENGTH = 2048;
     private int NUMBER_OF_INITIAL = 5;
-    private int NUMBER_OF_SAMPLE_POINTS = 20;
+    private int NUMBER_OF_SAMPLE_POINTS = 15;
     private double[][] mixedSamplesPhase;
     private double[][] initialPoints;
     private double[] distances;
     private double[] center;
     private int countLow;
     private int displayTime = 0;
-    int FREQ_BIN;
+    int FREQ_BIN = 0;
     private double thresBlink;
     private double thresSmile;
     private double thresTimeLow;
     private int iterator = 0;
+    private int chirp_cnt = 0;
     private double distPre = 0;
     private double distCur = 0;
     private double var;
     private boolean BinInitialized= false;
     private boolean ThresInitialized = false;
+    private File file;
+    private Context context;
 
     //Write to file
-    String filename="SleepSmile.txt", path="SmileDetection", content="";
+    String filename="SleepSmile.txt";
 
 
-    public SignalProcessor(){
+    public SignalProcessor(Context _context){
         mixedSamplesPhase = new double[NUMBER_OF_INITIAL][SAMPLE_LENGTH];
         initialPoints = new double[NUMBER_OF_SAMPLE_POINTS][2];
         distances = new double[NUMBER_OF_SAMPLE_POINTS];
         center = new double[]{0.0, 0.0};
+        context = _context;
     }
 
     void initializeFreq_Bin(){
         FREQ_BIN = binIndex();
         BinInitialized = true;
-        Log.e("initialization",String.format("FreqBin: %d", FREQ_BIN));
+        Log.d("initialization",String.format("FreqBin: %d", FREQ_BIN));
+        getFileTxt(FREQ_BIN+"\n", "SmileSleep.txt");
     }
 
     void initializeThresholds(){
         ThresInitialized = true;
         var = variance();
-        thresBlink = 5*var;
-        thresSmile = 5*var;
+        thresBlink = 3*var;
+        thresSmile = 3*var;
         thresTimeLow = 3;
-        Log.e("initialization",String.format("variance: %f", var));
+        Log.d("initialization",String.format("variance: %f", var));
     }
 
     void FourierTransform(double[] sample, double[] record)
@@ -106,17 +111,21 @@ public class SignalProcessor extends AppCompatActivity {
         distCur = distances[iterator];
         iterator = (iterator+1)%NUMBER_OF_SAMPLE_POINTS;
 
-        if(BinInitialized && ThresInitialized && iterator == 2*NUMBER_OF_INITIAL){
+        if(BinInitialized && ThresInitialized && iterator == NUMBER_OF_INITIAL){
             double[] v = prattNewton(initialPoints);
             center[0] = v[0];
             center[1] = v[1];
         }
         //Log.e("SignalDimension", String.format("%d x %d",analyticSample.length, analyticSample[0].length));
-        Log.e("SignalDistance", String.format("amplitude: %f, phase: %f, distance: %f", amplitude, angle, distCur));
-        getFileTxt(amplitude+","+angle,"SmileSleep.txt");
-    }
+        Log.d("SignalDistance", String.format("amplitude: %f, phase: %f, distance: %f", amplitude, angle, distCur));
 
-    //double[][] pointIQplane		//global variable, initialize it to size of 50
+        long time = System.currentTimeMillis();
+        chirp_cnt++;
+
+        if(BinInitialized) {
+            getFileTxt(chirp_cnt + "," + time + "," + amplitude + "," + angle + "\n", "SmileSleep.txt");
+        }
+    }
 
     int binIndex()
     {
@@ -139,7 +148,7 @@ public class SignalProcessor extends AppCompatActivity {
                 bin = j;
             }
         }
-        Log.e("Max Range", String.format("Max Range: %f", maxRange));
+        Log.d("Max Range", String.format("Max Range: %f", maxRange));
         return bin;
     }
 
@@ -185,7 +194,7 @@ public class SignalProcessor extends AppCompatActivity {
         if(countLow >= thresTimeLow)
         {
             status = 0;
-            Log.e("Status", "Sleeping");
+            //Log.e("Status", "Sleeping");
             countLow = 0;
             displayTime = 0;
             return status;
@@ -195,7 +204,7 @@ public class SignalProcessor extends AppCompatActivity {
         {
             status = 1;
             displayTime = 0;
-            Log.e("Status","Smiling");
+            //Log.e("Status","Smiling");
             return status;
         }
 
@@ -206,19 +215,6 @@ public class SignalProcessor extends AppCompatActivity {
         }
 
         return status;
-    }
-
-    double[] signalToPoint(double[] signal)
-    {
-        // fourier domain conversion code
-
-        double[] point = new double[2];
-        //double amp, angle;
-        //point[0] = amp*Math.cos();
-        //point[1] = amp*Math.sin();
-
-
-        return point;
     }
 
 
@@ -323,28 +319,24 @@ public class SignalProcessor extends AppCompatActivity {
 
         return centroid;
     }
-    private void getFileTxt(String content,String filename)
+    public void getFileTxt(String content,String filename)
     {
-        File txt=null;
         try {
             //Log.e("path123","welcome");
+            File path = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+            file = new File(path, filename);
             FileWriter fw=null;
             BufferedWriter bw = null;
-            File directory = SignalProcessor.this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-            Log.e("path123",""+directory);
-            txt = new File(directory, filename+".txt");
-            Log.d("path",""+txt.exists());
-            if (!txt.exists()) {
-                txt.createNewFile();
+            Log.d("path",file.getAbsolutePath()+file.exists());
+            if (!file.exists()) {
+                file.createNewFile();
             }
-            fw = new FileWriter(txt.getAbsolutePath(), true);
+            fw = new FileWriter(file.getAbsolutePath(), true);
             bw= new BufferedWriter(fw);
             bw.write(content);
             bw.close();
-
-
         }catch(Exception e) {
-            //ok
+            Log.e("Write Errro", e.getMessage());
 
         }
     }

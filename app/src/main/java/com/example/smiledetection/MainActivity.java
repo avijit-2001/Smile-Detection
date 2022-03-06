@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.media.AudioDeviceInfo;
 import android.media.AudioFormat;
@@ -45,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
     // PLAYER
     AudioTrack audioTrack;
-    AudioDeviceInfo audioDeviceInfo;
+    AudioManager audioManager;
 
     //Display
     TextView textView;
@@ -75,7 +76,8 @@ public class MainActivity extends AppCompatActivity {
     private final String [] permissions = {Manifest.permission.RECORD_AUDIO,
             Manifest.permission.MANAGE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE};
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.MODIFY_AUDIO_SETTINGS};
 
     void genTone(){
 
@@ -96,7 +98,6 @@ public class MainActivity extends AppCompatActivity {
     void playSound() {
         audioTrack.write(GENERATED_SOUND, 0, GENERATED_SOUND.length);
         audioTrack.setLoopPoints(0, GENERATED_SOUND.length/2, -1);
-        audioTrack.setPreferredDevice(audioDeviceInfo);
         audioTrack.play();
     }
 
@@ -226,6 +227,12 @@ public class MainActivity extends AppCompatActivity {
                 AudioFormat.ENCODING_PCM_16BIT, GENERATED_SOUND.length,
                 AudioTrack.MODE_STATIC);
 
+
+
+        audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);
+        audioManager.setSpeakerphoneOn(false);
+
         textView = findViewById(R.id.textView);
         expression = findViewById(R.id.expression);
         freqBin = findViewById(R.id.freqBin);
@@ -265,6 +272,7 @@ public class MainActivity extends AppCompatActivity {
             recorder.release();
 
         isRecording = false;
+        //audioManager.setMode(AudioManager.MODE_NORMAL);
     }
 
 }

@@ -272,7 +272,7 @@ public class MainActivity extends AppCompatActivity {
             recorder.release();
 
         isRecording = false;
-        //audioManager.setMode(AudioManager.MODE_NORMAL);
+        audioManager.setMode(AudioManager.MODE_NORMAL);
     }
 
 }

@@ -7,6 +7,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.github.psambit9791.jdsp.signal.CrossCorrelation;
 import com.github.psambit9791.jdsp.transform.DiscreteFourier;
 import com.github.psambit9791.jdsp.transform.Hilbert;
 
@@ -66,13 +67,26 @@ public class SignalProcessor extends AppCompatActivity {
         ThresInitialized = true;
         var = variance();
         thresBlink = 3*var;
-        thresSmile = 3*var;
-        thresTimeLow = 3;
+        thresSmile = 10*var;
+        thresTimeLow = 2;
         Log.d("initialization",String.format("variance: %f", var));
     }
 
-    void FourierTransform(double[] sample, double[] record)
+    void FourierTransform(double[] chirp, double[] record)
     {
+        CrossCorrelation cc = new CrossCorrelation(chirp, record);
+        double[] out = cc.crossCorrelate("valid");
+
+        int maxAt = 0;
+        for(int i=0; i<out.length; i++){
+            maxAt = out[i] > out[maxAt] ? i : maxAt;
+        }
+
+        double[] sample = new double[chirp.length - maxAt];
+        for(int i=maxAt; i<chirp.length; i++){
+            sample[i-maxAt] = chirp[i];
+        }
+
         Hilbert h = new Hilbert(sample);
         h.hilbertTransform();
         double[][] analyticSample = h.getOutput();
@@ -111,11 +125,11 @@ public class SignalProcessor extends AppCompatActivity {
         distCur = distances[iterator];
         iterator = (iterator+1)%NUMBER_OF_SAMPLE_POINTS;
 
-        if(BinInitialized && ThresInitialized && iterator == NUMBER_OF_INITIAL){
-            double[] v = prattNewton(initialPoints);
-            center[0] = v[0];
-            center[1] = v[1];
-        }
+//        if(BinInitialized && ThresInitialized && iterator == NUMBER_OF_INITIAL){
+//            double[] v = prattNewton(initialPoints);
+//            center[0] = v[0];
+//            center[1] = v[1];
+//        }
         //Log.e("SignalDimension", String.format("%d x %d",analyticSample.length, analyticSample[0].length));
         Log.d("SignalDistance", String.format("amplitude: %f, phase: %f, distance: %f", amplitude, angle, distCur));
 
@@ -187,14 +201,14 @@ public class SignalProcessor extends AppCompatActivity {
         if(distPre - distCur > thresBlink && countLow==0){
             countLow++;
         }
-        else if((countLow != 0) && (Math.abs(distCur - distPre) < 3*var)){
+        else if((countLow != 0) && (Math.abs(distCur - distPre) < 5*var)){
             countLow++;
         }
 
         if(countLow >= thresTimeLow)
         {
             status = 0;
-            //Log.e("Status", "Sleeping");
+            Log.e("Status", "Sleeping");
             countLow = 0;
             displayTime = 0;
             return status;
@@ -204,7 +218,7 @@ public class SignalProcessor extends AppCompatActivity {
         {
             status = 1;
             displayTime = 0;
-            //Log.e("Status","Smiling");
+            Log.e("Status","Smiling");
             return status;
         }
 

@@ -6,50 +6,15 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <Button
-        android:id="@+id/playChirp"
+    <EditText
+        android:id="@+id/expression"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Play Chirp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_marginTop="60dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        android:hint="Expression"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.526"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
-        app:layout_constraintVertical_bias="0.95" />
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
-        android:text="Status"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.501"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/sleepometer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="80dp"
-        android:text="Sleep-o-meter"
-        app:layout_constraintBottom_toTopOf="@+id/sleep"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.198"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/smilometer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:text="Smile-o-meter"
-        app:layout_constraintBottom_toTopOf="@+id/sleepometer"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.198"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -57,76 +22,29 @@
         android:id="@+id/freqBin"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="60dp"
         android:text="Freq Bin"
-        app:layout_constraintBottom_toTopOf="@+id/playChirp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.516"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
-        app:layout_constraintVertical_bias="0.949" />
-
-    <ImageView
-        android:id="@+id/sleep"
-        android:layout_width="248dp"
-        android:layout_height="269dp"
-        android:layout_marginEnd="8dp"
-        android:src="@drawable/awake"
-        app:layout_constraintBottom_toTopOf="@+id/freqBin"
-        app:layout_constraintEnd_toEndOf="parent"
-
-        app:layout_constraintHorizontal_bias="0.522"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
-        app:layout_constraintVertical_bias="0.226"
-        tools:srcCompat="@drawable/awake" />
-
-    <ImageView
-        android:id="@+id/smile"
-        android:layout_width="191dp"
-        android:layout_height="191dp"
-        app:layout_constraintBottom_toTopOf="@+id/freqBin"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView"
-        app:layout_constraintVertical_bias="0.724"
-        tools:src="@tools:sample/backgrounds/scenic"
-        tools:srcCompat="@drawable/normal" />
+        app:layout_constraintTop_toBottomOf="@+id/expression" />
 
-    <ProgressBar
-        android:id="@+id/progressBarsmile"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="174dp"
-        android:layout_height="18dp"
-        android:layout_marginTop="12dp"
-        android:background="#03A9F4"
-        android:backgroundTint="#006A1278"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.035"
-        app:layout_constraintStart_toEndOf="@+id/smilometer"
-        app:layout_constraintTop_toBottomOf="@+id/textView" />
-
-    <ProgressBar
-        android:id="@+id/progressBarsleep"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="170dp"
-        android:layout_height="17dp"
-        android:layout_marginTop="8dp"
-        android:backgroundTint="#00BCD4"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.078"
-        app:layout_constraintStart_toEndOf="@+id/sleepometer"
-        app:layout_constraintTop_toBottomOf="@+id/progressBarsmile" />
-
-    <EditText
-        android:id="@+id/expression"
-        android:hint="Expression (for data collection)"
+    <Button
+        android:id="@+id/playChirp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:ems="10"
-        android:inputType="textPersonName"
-        app:layout_constraintBottom_toTopOf="@+id/freqBin"
+        android:layout_marginTop="150dp"
+        android:text="Play Chirp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/smile" />
+        app:layout_constraintTop_toBottomOf="@+id/freqBin" />
 
+    <Button
+        android:id="@+id/stopChirp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:text="Stop Chirp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/playChirp" />
 </androidx.constraintlayout.widget.ConstraintLayout>

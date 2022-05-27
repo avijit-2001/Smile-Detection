@@ -16,6 +16,7 @@ import android.media.MediaPlayer;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.widget.Button;
@@ -23,6 +24,14 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 @RequiresApi(api = Build.VERSION_CODES.R)
 public class MainActivity extends AppCompatActivity {
@@ -43,12 +52,13 @@ public class MainActivity extends AppCompatActivity {
     int iterator = 0;
     boolean FreqBinInitialized = false;
     boolean ThresholdInitialized = false;
+    //private Boolean direct = false;
 
     // PLAYER
     AudioTrack audioTrack;
     AudioManager audioManager;
     Thread recordingThread = null;
-    Thread consumingThread = null;
+    Thread processingThread = null;
 
     //Display
     TextView textView;
@@ -57,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     ImageView sleepTracker, smileTracker;
     MediaPlayer md;
     ProgressBar smilometer, sleepometer;
+    File pcmFile;
 
     // CIRCULAR BUFFER
     private CircularBuffer circularBuffer = new CircularBuffer(BUFFER_SIZE);
@@ -126,6 +137,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
     private AudioRecord recorder = null;
     private Boolean isRecording = false;
+    private Boolean direct = false;
 
     int bufferElements2Rec = 2048; // want to play 2048 (2K) since 2 bytes we use only 1024
     int bytesPerElement = 2; // 2 bytes in 16bit format
@@ -143,6 +155,7 @@ public class MainActivity extends AppCompatActivity {
 
         recorder.startRecording();
         isRecording = true;
+
         recordingThread = new Thread(new Runnable() {
             public void run() {
                 writeAudioDataToBuffer();
@@ -150,13 +163,14 @@ public class MainActivity extends AppCompatActivity {
         }, "AudioRecorder Thread");
         recordingThread.start();
 
-        /*consumingThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                consumeDataFromBuffer();
-            }
-        }, "BufferConsumerThread");
-        consumingThread.start();*/
+//        else {
+//            processingThread = new Thread(new Runnable() {
+//                public void run() {
+//                    writeAudioDataToBuffer();
+//                }
+//            }, "AudioProcessor Thread");
+//            processingThread.start();
+//        }
     }
 
     private void writeAudioDataToBuffer() {
@@ -166,82 +180,102 @@ public class MainActivity extends AppCompatActivity {
             recorder.read(sData, 0, bufferElements2Rec);
             //Log.e("Record data", String.format("fData[100]:%f",sData[100]/(double)32768));
             //int e = circularBuffer.insertBuffer(sData);
-            consumeDataFromBuffer(sData);
-        }
-    }
-
-    private void consumeDataFromBuffer(short[] sData){
-
 
             //short[] sData = circularBuffer.consumeBuffer();
             double[] fData = new double[sData.length];
 
+            //int size = (int) pcmFile.length();
+            //File pcmFile = new File(this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "Direct.pcm");
+            byte[] bytes = new byte[bufferElements2Rec*2];
+            try {
+                InputStream buf = getResources().openRawResource(R.raw.direct);
+                buf.read(bytes, 0, bufferElements2Rec*2);
+                buf.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            short[] dData = byte2short(bytes);
+            double[] fdData = new double[dData.length];
+
             Filter filter = new Filter(15900, 44100, Filter.PassType.Highpass, 1);
+            Filter filter2 = new Filter(15900, 44100, Filter.PassType.Highpass, 1);
             for (int i = 0; i < sData.length; i++) {
                 float data = sData[i] / (float) 32768;
                 filter.Update(data);
                 fData[i] = filter.getValue();
+
+                float data2 = dData[i] / (float) 32768;
+                filter2.Update(data2);
+                fdData[i] = filter.getValue();
                 //fData[i] = sData[i] / (double)32768;
                 //dData[i] = (short) (fData[i] * 32767);
             }
 
-            signalProcessor.FourierTransform(sample, fData);
-            if (!FreqBinInitialized && iterator == POINTS_FOR_INITIAL) {
-                signalProcessor.initializeFreq_Bin();
-                freqBin.post(new Runnable() {
-                    public void run() {
-                        freqBin.setText(Integer.toString(signalProcessor.FREQ_BIN));
-                    }
-                });
-                ;
-                FreqBinInitialized = true;
+            signalProcessor.FourierTransform(sample,fdData, fData);
+        }
+    }
+
+    private byte[] short2byte(short[] sData) {
+        int shortArrSize = sData.length;
+        byte[] bytes = new byte[shortArrSize * 2];
+        for (int i = 0; i < shortArrSize; i++) {
+            bytes[i * 2] = (byte) (sData[i] & 0x00FF);
+            bytes[(i * 2) + 1] = (byte) (sData[i] >> 8);
+            sData[i] = 0;
+        }
+        return bytes;
+
+    }
+
+    private short[] byte2short(byte[] bytes) {
+        int shortArrSize = bytes.length/2;
+        short[] sData = new short[shortArrSize];
+        for(int i=0; i<shortArrSize; i++) {
+            short lsb = (short) (bytes[i*2]);
+            short msb = (short) (bytes[i*2+1]);
+            sData[i] = (short) ((msb << 8) + lsb);
+        }
+        return sData;
+    }
+
+    private void writeAudioDataToFile(String pcmFileName) {
+        // Write the output audio in byte
+        File pcmFile = new File(this.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "Direct.pcm");
+        String filePath = pcmFile.getAbsolutePath();
+        Log.e("path",filePath);
+        short sData[] = new short[bufferElements2Rec];
+        FileOutputStream os;
+        os = null;
+        try {
+            os = new FileOutputStream(filePath);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        while (isRecording) {
+            // gets the voice output from microphone to byte format
+            recorder.read(sData, 0, bufferElements2Rec);
+            float[] dData = new float[sData.length];
+            for(int i=0; i< sData.length; i++){
+                dData[i] = sData[i] / (float)32768 ;
+                sData[i] = (short) (dData[i] * 32767);
             }
 
-            if (!ThresholdInitialized && iterator == 2 * POINTS_FOR_INITIAL) {
-                signalProcessor.initializeThresholds();
-                ThresholdInitialized = true;
+            try {
+                byte bData[] = short2byte(sData);
+                os.write(bData, 0, bufferElements2Rec * bytesPerElement);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
-            /*if(FreqBinInitialized && ThresholdInitialized){
-                int status = signalProcessor.checkStatus();
-                if(status == 0){
-                    textView.post(new Runnable() {
-                        public void run() {
-                            textView.setText("Sleeping");
-                            sleepTracker.setImageResource(R.drawable.sleep);
-                            smileTracker.setImageResource(R.drawable.normal);
-                            if(md==null)
-                                md=MediaPlayer.create(getApplicationContext(), R.raw.sleepy);
-                            //md.start();
-                            SleepCounter++;
-                            smilometer.setProgress(SleepCounter);
-
-                        }
-                    });
-                }
-                else if(status == 1){
-                    textView.post(new Runnable() {
-                        public void run() {
-                            textView.setText("Smiling");
-                            sleepTracker.setImageResource(R.drawable.awake);
-                            smileTracker.setImageResource(R.drawable.smile);
-                            SmileCounter++;
-                            smilometer.setProgress(SmileCounter);
-                        }
-                    });
-                }
-                else if(status == -1){
-                    textView.post(new Runnable() {
-                        public void run() {
-                            textView.setText("Status");
-                            sleepTracker.setImageResource(R.drawable.awake);
-                            smileTracker.setImageResource(R.drawable.normal);
-                        }
-                    });
-                }
-            }*/
-            iterator = (iterator + 1) % NUMBER_OF_POINTS;
-
+        }
+        try {
+            os.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void stopRecording() {
@@ -252,7 +286,7 @@ public class MainActivity extends AppCompatActivity {
             recorder.release();
             recorder = null;
             recordingThread = null;
-            consumingThread = null;
+            processingThread = null;
         }
     }
 
@@ -285,7 +319,11 @@ public class MainActivity extends AppCompatActivity {
         Button playChirp;
         playChirp = findViewById(R.id.playChirp);
         playChirp.setOnClickListener(view -> {
-            signalProcessor.getFileTxt(expression.getText().toString() + "\n", "SmileSleep.txt");
+            String s = expression.getText().toString();
+            direct = (s.equals("Direct") || s.equals("direct"));
+            Log.e("direct",String.format("%b",direct));
+            if(!direct)
+                signalProcessor.getFileTxt(s + "\n", "SmileSleep.txt");
             genTone();
             Thread playThread = new Thread(new Runnable() {
                 @Override

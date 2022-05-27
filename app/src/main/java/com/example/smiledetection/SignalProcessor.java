@@ -72,9 +72,61 @@ public class SignalProcessor extends AppCompatActivity {
         Log.d("initialization",String.format("variance: %f", var));
     }
 
-    void FourierTransform(double[] chirp, double[] record)
+    void FourierTransform(double[] chirp, double[] direct, double[] record)
     {
-        CrossCorrelation cc = new CrossCorrelation(chirp, record);
+        double[] rSample = signalMultiplication(chirp, record);
+        double[] dSample = signalMultiplication(chirp, direct);
+
+        Hilbert h = new Hilbert(rSample);
+        h.hilbertTransform();
+        double[][] analyticRSample = h.getOutput();
+
+        Hilbert d = new Hilbert(dSample);
+        d.hilbertTransform();
+        double[][] analyticDSample = d.getOutput();
+
+        Hilbert f = new Hilbert(direct);
+        f.hilbertTransform();
+        double[][] analyticDirect = f.getOutput();
+
+        Hilbert g = new Hilbert(record);
+        g.hilbertTransform();
+        double[][] analyticRecord = g.getOutput();
+
+        double[] mixedRSignal = new double[SAMPLE_LENGTH];
+        double[] mixedDSignal = new double[SAMPLE_LENGTH];
+
+        for(int i=0; i<SAMPLE_LENGTH; i++)
+        {
+            mixedRSignal[i] = analyticRecord[i][0]*analyticRSample[i][0] + analyticRecord[i][1]*analyticRSample[i][1];
+            mixedDSignal[i] = analyticDirect[i][0]*analyticDSample[i][0] + analyticDirect[i][1]*analyticDSample[i][1];
+        }
+
+        DiscreteFourier fft = new DiscreteFourier(mixedRSignal);
+        fft.dft();
+        Complex[] mixedRFftComplex = fft.returnComplex(true);
+
+        DiscreteFourier fftD = new DiscreteFourier(mixedDSignal);
+        fftD.dft();
+        Complex[] mixedDFftcomplex = fftD.returnComplex(true);
+
+        long time = System.currentTimeMillis();
+        chirp_cnt++;
+
+        String Amplitude = "";
+        String Angle = "";
+        for(int i=0; i<mixedRFftComplex.length; i++){
+
+            //Complex value = mixedRFftComplex[i].subtract(mixedDFftcomplex[i]);
+            Amplitude += mixedRFftComplex[i].abs() + " ";
+            Angle += mixedRFftComplex[i].getArgument() + " ";
+        }
+        Log.d("Print time", String.format("%d",time));
+        getFileTxt(chirp_cnt + "," + time + "\n Amplitude:" + Amplitude + "\n Angle:" + Angle + "\n", "SmileSleep.txt");
+    }
+
+    double[] signalMultiplication(double[] x, double[] y){
+        CrossCorrelation cc = new CrossCorrelation(x, y);
         double[] out = cc.crossCorrelate("valid");
 
         int maxAt = 0;
@@ -82,63 +134,11 @@ public class SignalProcessor extends AppCompatActivity {
             maxAt = out[i] > out[maxAt] ? i : maxAt;
         }
 
-        double[] sample = new double[chirp.length - maxAt];
-        for(int i=maxAt; i<chirp.length; i++){
-            sample[i-maxAt] = chirp[i];
+        double[] sample = new double[x.length - maxAt];
+        for(int i=maxAt; i<x.length; i++){
+            sample[i-maxAt] = x[i];
         }
-
-        Hilbert h = new Hilbert(sample);
-        h.hilbertTransform();
-        double[][] analyticSample = h.getOutput();
-
-        Hilbert g = new Hilbert(record);
-        g.hilbertTransform();
-        double[][] analyticRecord = g.getOutput();
-
-        double[] mixedSignal = new double[SAMPLE_LENGTH];
-
-        for(int i=0; i<SAMPLE_LENGTH; i++)
-        {
-            mixedSignal[i] = analyticRecord[i][0]*analyticSample[i][0] + analyticRecord[i][1]*analyticSample[i][1];
-        }
-
-        DiscreteFourier fft = new DiscreteFourier(mixedSignal);
-        fft.dft();
-        Complex[] mixedFftComplex = fft.returnComplex(true);
-
-        if(iterator < NUMBER_OF_INITIAL && !BinInitialized){
-            for(int i=0; i< SAMPLE_LENGTH/2; i++) {
-                mixedSamplesPhase[iterator][i] = mixedFftComplex[i].getArgument();
-            }
-        }
-
-        double amplitude = mixedFftComplex[FREQ_BIN].abs();
-        double angle = mixedFftComplex[FREQ_BIN].getArgument();
-        if(BinInitialized) {
-            initialPoints[iterator][0] = amplitude * Math.cos(angle);
-            initialPoints[iterator][1] = amplitude * Math.sin(angle);
-
-            distances[iterator] = pointDistanceCartesian(initialPoints[iterator], center);
-        }
-
-        distPre = distCur;
-        distCur = distances[iterator];
-        iterator = (iterator+1)%NUMBER_OF_SAMPLE_POINTS;
-
-//        if(BinInitialized && ThresInitialized && iterator == NUMBER_OF_INITIAL){
-//            double[] v = prattNewton(initialPoints);
-//            center[0] = v[0];
-//            center[1] = v[1];
-//        }
-        //Log.e("SignalDimension", String.format("%d x %d",analyticSample.length, analyticSample[0].length));
-        Log.d("SignalDistance", String.format("amplitude: %f, phase: %f, distance: %f", amplitude, angle, distCur));
-
-        long time = System.currentTimeMillis();
-        chirp_cnt++;
-
-        if(BinInitialized) {
-            getFileTxt(chirp_cnt + "," + time + "," + amplitude + "," + angle + "\n", "SmileSleep.txt");
-        }
+        return sample;
     }
 
     int binIndex()

@@ -89,7 +89,7 @@ public class MainActivity extends AppCompatActivity {
 
     void genTone(){
 
-        double F11 = 16000, F12 = 17000, F21 = 17200, F22 = 18200;
+        double F11 = 16000, F12 = 19000;
         double Ftone = 19000;
         int j = 0;
 
@@ -107,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
         for(int i=0; i < CHIRP_DURATION*SAMPLE_RATE; i++)
         {
             double c = 1000 / CHIRP_DURATION;
-            sample[j++] = Math.sin(2 * Math.PI * (c / 2 * i / SAMPLE_RATE + F21) * i / SAMPLE_RATE);
+            sample[j++] = Math.sin(2 * Math.PI * (c / 2 * i / SAMPLE_RATE + F11) * i / SAMPLE_RATE);
         }
 
         for(int i=0; i < SILENCE_DURATION*SAMPLE_RATE; i++)

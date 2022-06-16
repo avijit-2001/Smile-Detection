@@ -209,7 +209,7 @@ public class MainActivity extends AppCompatActivity {
 
                 float data2 = dData[i] / (float) 32768;
                 filter2.Update(data2);
-                fdData[i] = filter.getValue();
+                fdData[i] = filter2.getValue();
                 //fData[i] = sData[i] / (double)32768;
                 //dData[i] = (short) (fData[i] * 32767);
             }

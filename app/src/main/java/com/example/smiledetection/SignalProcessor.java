@@ -117,9 +117,9 @@ public class SignalProcessor extends AppCompatActivity {
         String Angle = "";
         for(int i=0; i<mixedRFftComplex.length; i++){
 
-            //Complex value = mixedRFftComplex[i].subtract(mixedDFftcomplex[i]);
-            Amplitude += mixedRFftComplex[i].abs() + " ";
-            Angle += mixedRFftComplex[i].getArgument() + " ";
+            Complex value = mixedRFftComplex[i].subtract(mixedDFftcomplex[i]);
+            Amplitude += value.abs() + " ";
+            Angle += value.getArgument() + " ";
         }
         Log.d("Print time", String.format("%d",time));
         getFileTxt(chirp_cnt + "," + time + "\n Amplitude:" + Amplitude + "\n Angle:" + Angle + "\n", "SmileSleep.txt");

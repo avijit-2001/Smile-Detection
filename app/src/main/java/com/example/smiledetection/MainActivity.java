@@ -96,7 +96,9 @@ public class MainActivity extends AppCompatActivity {
         for(int i=0; i < CHIRP_DURATION*SAMPLE_RATE; i++)
         {
             double c = 1000 / CHIRP_DURATION;
-            sample[j++] = Math.sin(2 * Math.PI * (c / 2 * i / SAMPLE_RATE + F11) * i / SAMPLE_RATE);
+            sample[j++] = Math.sin(2 * Math.PI * (c / 2 * i / SAMPLE_RATE + F11) * i / SAMPLE_RATE) +
+                          Math.sin(2 * Math.PI * Ftone * i/SAMPLE_RATE) ;
+
         }
 
         for(int i=0; i < SILENCE_DURATION*SAMPLE_RATE; i++)
@@ -107,7 +109,8 @@ public class MainActivity extends AppCompatActivity {
         for(int i=0; i < CHIRP_DURATION*SAMPLE_RATE; i++)
         {
             double c = 1000 / CHIRP_DURATION;
-            sample[j++] = Math.sin(2 * Math.PI * (c / 2 * i / SAMPLE_RATE + F11) * i / SAMPLE_RATE);
+            sample[j++] = Math.sin(2 * Math.PI * (c / 2 * i / SAMPLE_RATE + F11) * i / SAMPLE_RATE) +
+                          Math.sin(2 * Math.PI * Ftone * i/SAMPLE_RATE);
         }
 
         for(int i=0; i < SILENCE_DURATION*SAMPLE_RATE; i++)

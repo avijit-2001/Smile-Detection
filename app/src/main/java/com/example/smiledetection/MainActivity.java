@@ -87,6 +87,9 @@ public class MainActivity extends AppCompatActivity {
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.MODIFY_AUDIO_SETTINGS};
 
+    // DATABASE
+    DatabaseHelper databaseHelper;
+
     void genTone(){
 
         double F11 = 16000, F12 = 19000;
@@ -176,6 +179,17 @@ public class MainActivity extends AppCompatActivity {
 //        }
     }
 
+    String arrayToString(double[] data) {
+        Integer n = data.length;
+        String res = "";
+        for(Integer i = 0; i < n; i++) {
+            res.concat(""+data[i]);
+            res += " ";
+        }
+        return res;
+    }
+
+
     private void writeAudioDataToBuffer() {
         short[] sData = new short[bufferElements2Rec];
 
@@ -213,11 +227,18 @@ public class MainActivity extends AppCompatActivity {
                 float data2 = dData[i] / (float) 32768;
                 filter2.Update(data2);
                 fdData[i] = filter2.getValue();
-                //fData[i] = sData[i] / (double)32768;
-                //dData[i] = (short) (fData[i] * 32767);
             }
 
-            signalProcessor.FourierTransform(sample,fdData, fData);
+//            Log.d(TAG, sample.length + " sample: " + arrayToString(sample) );
+//            Log.d(TAG, "fdData: " + arrayToString(fdData));
+//            Log.d(TAG, "fData: " + arrayToString(fData));
+
+            databaseHelper.addData(
+                    arrayToString(sample),
+                    arrayToString(fdData),
+                    arrayToString(fData)
+            );
+//            signalProcessor.FourierTransform(sample,fdData, fData);
         }
     }
 
@@ -310,7 +331,7 @@ public class MainActivity extends AppCompatActivity {
                 AudioFormat.ENCODING_PCM_16BIT, GENERATED_SOUND.length,
                 AudioTrack.MODE_STATIC);
 
-
+        databaseHelper = new DatabaseHelper(this);
 
         audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
         audioManager.setMode(AudioManager.MODE_IN_COMMUNICATION);

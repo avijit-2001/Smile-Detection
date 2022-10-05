@@ -228,17 +228,8 @@ public class MainActivity extends AppCompatActivity {
                 filter2.Update(data2);
                 fdData[i] = filter2.getValue();
             }
-
-//            Log.d(TAG, sample.length + " sample: " + arrayToString(sample) );
-//            Log.d(TAG, "fdData: " + arrayToString(fdData));
-//            Log.d(TAG, "fData: " + arrayToString(fData));
-
-            databaseHelper.addData(
-                    arrayToString(sample),
-                    arrayToString(fdData),
-                    arrayToString(fData)
-            );
-//            signalProcessor.FourierTransform(sample,fdData, fData);
+            Log.d("Call", "started writing");
+            signalProcessor.WriteData(sample,fdData, fData);
         }
     }
 
@@ -356,14 +347,14 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             playThread.start();
+            Handler handler = new Handler();
+            handler.postDelayed(new Runnable() {
+                public void run() {
+                    startRecording();
+                }
+            }, 20);
         });
 
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            public void run() {
-                startRecording();
-            }
-        }, 20);
 
         Button stopChirp = findViewById(R.id.stopChirp);
         stopChirp.setOnClickListener(view -> {

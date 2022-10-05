@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.Arrays;
 
 public class SignalProcessor extends AppCompatActivity {
 
@@ -71,7 +72,12 @@ public class SignalProcessor extends AppCompatActivity {
         thresTimeLow = 2;
         Log.d("initialization",String.format("variance: %f", var));
     }
-
+    void WriteData(double[] chirp, double[] direct, double[] record)
+    {
+        Log.d("writing", "raw_data");
+        long time = System.currentTimeMillis();
+        getFileTxt(time + "\nchirp:" + Arrays.toString(chirp) + "\ndirect:" + Arrays.toString(direct) + "\n" + "\nrecord:" + Arrays.toString(record), "RawDataCollection.txt");
+    }
     void FourierTransform(double[] chirp, double[] direct, double[] record)
     {
         double[] rSample = signalMultiplication(chirp, record);

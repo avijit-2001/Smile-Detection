@@ -40,7 +40,7 @@ dependencies {
 
     implementation 'androidx.appcompat:appcompat:1.4.0'
     implementation 'com.google.android.material:material:1.4.0'
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.0.0'
     implementation ('com.github.psambit9791:jdsp:0.8.0'){
         exclude group: 'org.apache.maven.surefire', module: 'common-java'
         exclude group: 'org.apache.maven.surefire', module: 'surefire-api'

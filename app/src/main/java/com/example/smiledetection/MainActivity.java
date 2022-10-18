@@ -145,7 +145,7 @@ public class MainActivity extends AppCompatActivity {
     private Boolean isRecording = false;
     private Boolean direct = false;
 
-    int bufferElements2Rec = 2048; // want to play 2048 (2K) since 2 bytes we use only 1024
+    int bufferElements2Rec = 256; // want to play 2048 (2K) since 2 bytes we use only 1024
     int bytesPerElement = 2; // 2 bytes in 16bit format
 
     private void startRecording() {
@@ -229,6 +229,7 @@ public class MainActivity extends AppCompatActivity {
                 fdData[i] = filter2.getValue();
             }
             Log.d("Call", "started writing");
+            Log.d("Chirp_l", "" + sample.length + "," + fdData.length + "," + fData.length);
             signalProcessor.WriteData(sample,fdData, fData);
         }
     }

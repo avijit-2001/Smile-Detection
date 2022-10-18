@@ -19,6 +19,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 
 public class SignalProcessor extends AppCompatActivity {
 
@@ -44,6 +46,8 @@ public class SignalProcessor extends AppCompatActivity {
     private boolean ThresInitialized = false;
     private File file;
     private Context context;
+    private String storeFileName = "Experiment_";
+    private int counter = -1;
 
     //Write to file
     String filename="SleepSmile.txt";
@@ -74,9 +78,9 @@ public class SignalProcessor extends AppCompatActivity {
     }
     void WriteData(double[] chirp, double[] direct, double[] record)
     {
-        Log.d("writing", "raw_data");
-        long time = System.currentTimeMillis();
-        getFileTxt(time + "\nchirp:" + Arrays.toString(chirp) + "\ndirect:" + Arrays.toString(direct) + "\n" + "\nrecord:" + Arrays.toString(record), "RawDataCollection.txt");
+        counter++;
+        Date currentDateTime = Calendar.getInstance().getTime();
+        getFileTxt("Datetime:" + currentDateTime + "\nchirp:" + Arrays.toString(chirp) + "\ndirect:" + Arrays.toString(direct) + "\nrecord:" + Arrays.toString(record) + "\n", storeFileName + counter/1000 + ".txt");
     }
     void FourierTransform(double[] chirp, double[] direct, double[] record)
     {
@@ -342,7 +346,6 @@ public class SignalProcessor extends AppCompatActivity {
     public void getFileTxt(String content,String filename)
     {
         try {
-            //Log.e("path123","welcome");
             File path = context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
             file = new File(path, filename);
             FileWriter fw=null;
